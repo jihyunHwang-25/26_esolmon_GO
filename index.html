@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>청렴몬 GO - 2026 초등학교 교직원 맞춤형 청렴 연수</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .pokeball-bounce {
+            animation: bounce 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-12px) scale(1.05); }
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(147, 51, 234, 0.8); }
+        }
+
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .sparkle-bg {
+            background: radial-gradient(circle at center, rgba(30,58,138,0.7) 0%, rgba(15,23,42,1) 100%);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printableQrSection, #printableQrSection * {
+                visibility: visible !important;
+            }
+            #printableQrSection {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 10px !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                border: 2px solid #000 !important;
+                background: #fff !important;
+                color: #000 !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center relative overflow-x-hidden sparkle-bg">
+
+    <!-- 상단 헤더 -->
+    <header class="w-full max-w-md bg-slate-900/90 backdrop-blur-md border-b border-slate-700/60 p-4 sticky top-0 z-30 flex justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center text-white font-black text-xl shadow-md border border-white/20">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-amber-300 via-amber-100 to-emerald-300 bg-clip-text text-transparent">
+                    청렴몬 GO <span class="text-xs text-amber-400 font-normal">v2026</span>
+                </h1>
+                <p class="text-[11px] text-slate-400">경기도교육청 이솔초 교직원 청렴연수</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <button id="soundToggleBtn" onclick="toggleSound()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center hover:bg-slate-700 transition" title="음향 온/오프">
+                <i class="fa-solid fa-volume-high text-amber-300" id="soundIcon"></i>
+            </button>
+            <button onclick="openAdminModal()" class="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-bold transition shadow-sm">
+                <i class="fa-solid fa-qrcode text-amber-400"></i> 스탑별 QR 인쇄
+            </button>
+        </div>
+    </header>
+
+    <!-- 인쇄 전용 6대 스탑 QR 안내판 영역 (인쇄 시 전면 출력) -->
+    <div id="printableQrSection" class="hidden">
+        <div class="text-center mb-6 no-print">
+            <p class="text-xs text-slate-400">학교 게시판 및 학년 부장실 입구 부착용 QR 코드입니다.</p>
+        </div>
+        <div id="qrCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- 동적 QR 카드 생성 -->
+        </div>
+    </div>
+
+    <!-- 메인 컨테이너 -->
+    <main class="w-full max-w-md flex-1 p-4 flex flex-col justify-start items-center space-y-4 relative pb-24">
+
+        <!-- 진행 현황 대시보드 -->
+        <section class="w-full bg-slate-800/80 rounded-2xl border border-slate-700 p-4 shadow-xl backdrop-blur-sm">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-briefcase text-amber-400"></i> 내 청렴 인벤토리
+                </span>
+                <div class="flex items-center gap-1.5">
+                    <span id="progressText" class="text-xs font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                        0 / 6 획득 (0%)
+                    </span>
+                    <button onclick="openResetModal()" class="text-[11px] bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full font-bold transition flex items-center gap-1" title="기록 초기화 및 다시 시작">
+                        <i class="fa-solid fa-rotate-left text-[10px]"></i> 다시하기
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 게이지 바 -->
+            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700 mb-3">
+                <div id="progressBar" class="bg-gradient-to-r from-amber-400 via-emerald-400 to-cyan-400 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
+            </div>
+
+            <!-- 수집 아이템 그리드 슬롯 (6개) -->
+            <div id="inventorySlots" class="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
+                <!-- JavaScript로 슬롯 동적 생성 -->
+            </div>
+        </section>
+
+        <!-- 모드 전환 탭 (가상 학교 탐험 / 실제 QR코드 스캔) -->
+        <div class="w-full bg-slate-900/80 p-1 rounded-xl border border-slate-800 flex text-xs font-medium">
+            <button id="tabMapBtn" onclick="switchMode('map')" class="flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold transition flex justify-center items-center gap-1.5">
+                <i class="fa-solid fa-map"></i> 가상 학교 탐험
+            </button>
+            <button id="tabQrBtn" onclick="switchMode('qr')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition flex justify-center items-center gap-1.5">
+                <i class="fa-solid fa-camera"></i> 현장 QR코드 입력
+            </button>
+        </div>
+
+        <!-- 가상 학교 탐험 View (스탑 리스트) -->
+        <section id="mapModeView" class="w-full space-y-3">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-school text-blue-400"></i> 이솔초등학교 6대 청렴 포켓스탑
+                </h2>
+                <span id="modeStatusTag" class="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                    탐험 모드 활성화
+                </span>
+            </div>
+
+            <!-- 학교 포켓스탑 리스트 -->
+            <div id="stopList" class="space-y-2.5">
+                <!-- 동적 포켓스탑 생성 -->
+            </div>
+        </section>
+
+        <!-- 현장 QR 스캔/코드 직접입력 View -->
+        <section id="qrModeView" class="w-full hidden bg-slate-800/80 rounded-2xl border border-slate-700 p-5 text-center space-y-4">
+            <div class="space-y-1">
+                <h3 class="text-sm font-bold text-white flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-camera text-amber-400"></i> 실시간 카메라 QR 스캔
+                </h3>
+                <p class="text-xs text-slate-400">학교 벽면에 부착된 QR 코드를 카메라 화면 중앙에 맞춰주세요.</p>
+            </div>
+
+            <!-- QR 카메라 비디오 영역 -->
+            <div class="relative w-full max-w-xs mx-auto overflow-hidden rounded-xl border-2 border-amber-500/50 bg-slate-950 shadow-inner min-h-[200px] flex flex-col justify-center items-center">
+                <div id="qrScannerContainer" class="w-full"></div>
+                <div id="cameraStatusMsg" class="p-4 text-xs text-slate-400 flex flex-col items-center gap-2">
+                    <i class="fa-solid fa-video text-2xl text-slate-500"></i>
+                    <span>카메라 권한을 허용하시면 스캔이 시작됩니다.</span>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-2">
+                <button id="startCamBtn" onclick="startCameraScanner()" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-video"></i> 카메라 켜기
+                </button>
+                <button id="stopCamBtn" onclick="stopCameraScanner()" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-video-slash"></i> 카메라 끄기
+                </button>
+            </div>
+
+            <div class="pt-3 border-t border-slate-700/60 space-y-2">
+                <p class="text-[11px] text-slate-400 font-medium">또는 스탑 코드를 수동으로 입력하세요</p>
+                <div class="flex gap-2 max-w-xs mx-auto">
+                    <input type="text" id="manualCodeInput" placeholder="스탑 코드 (예: STOP1)" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-xs text-center uppercase tracking-widest text-amber-300 focus:outline-none focus:border-amber-400">
+                    <button onclick="submitManualCode()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition">
+                        입력
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 최종 이수증 및 청렴몬 수집 축하 배너 (6개 모두 모았을 때 등장) -->
+        <section id="completionBanner" class="w-full hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 p-0.5 rounded-2xl shadow-2xl pulse-glow">
+            <div class="bg-slate-900 p-5 rounded-[15px] text-center space-y-4">
+                
+                <!-- 축하 문구 -->
+                <div class="space-y-1">
+                    <div class="inline-block px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-400/40 rounded-full text-xs font-black">
+                        🎉 ALL CLEAR!
+                    </div>
+                    <h3 class="text-base font-black text-amber-300 tracking-tight mt-1">
+                        "당신을 이솔의 청렴 교직원으로 인정합니다!"
+                    </h3>
+                    <p class="text-xs text-emerald-400 font-bold">✨ 전설의 이솔청렴몬을 수집하셨습니다!</p>
+                </div>
+
+                <!-- 수집된 랜덤 이솔청렴몬 캐릭터 카드 -->
+                <div id="integrityMonCard" class="bg-gradient-to-b from-slate-800 to-slate-950 border-2 border-amber-400/60 p-4 rounded-xl space-y-3 relative overflow-hidden shadow-inner">
+                    <div class="absolute top-2 right-2 text-[9px] font-black text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/30">
+                        LEGENDARY
+                    </div>
+
+                    <div id="monAvatarBg" class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-rose-500 p-1 shadow-lg pokeball-bounce flex items-center justify-center">
+                        <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-4xl text-amber-300">
+                            <i id="monIcon" class="fa-solid fa-dragon"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 id="monName" class="text-sm font-black text-amber-200">전설의 이솔청렴룡</h4>
+                        <p id="monTitle" class="text-[11px] text-slate-300 font-medium">"청렴의 빛으로 모든 비위를 물리치는 수호룡"</p>
+                        <p id="monDesc" class="text-[10px] text-slate-400 mt-1 italic">특성: 공정함 +100 · 청렴도 MAX · 방어력 무한</p>
+                    </div>
+
+                    <!-- 캐릭터 카드 다운로드 버튼 -->
+                    <button onclick="downloadMonCard()" class="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-lg text-xs transition shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> 🎨 내 청렴몬 포토카드 저장하기 (PNG)
+                    </button>
+                </div>
+
+                <p class="text-[11px] text-slate-400">2026학년도 교직원 맞춤형 청렴연수를 성공적으로 이수하셨습니다.</p>
+                
+                <div class="space-y-2">
+                    <button onclick="openCertificateModal()" class="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-sm shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-contract"></i> 청렴 연수 이수증 발급 받기
+                    </button>
+                    
+                    <button onclick="openResetModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-xl text-xs transition border border-rose-500/30 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> 처음부터 다시 도전하기 (기록 초기화)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 미션 / 퀴즈 팝업 모달 -->
+    <div id="quizModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div id="quizModalCard" class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- 모달 헤더 -->
+            <div id="modalHeader" class="p-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span id="modalStopBadge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">STOP 1</span>
+                    <h3 id="modalStopName" class="text-sm font-bold text-white">1학년 부장님 스탑</h3>
+                </div>
+                <button onclick="closeQuizModal()" class="text-slate-400 hover:text-white text-lg px-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- 모달 내용 -->
+            <div class="p-5 overflow-y-auto custom-scrollbar space-y-4">
+                
+                <!-- 청렴 아이템 등장 그래픽 -->
+                <div class="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/60 rounded-xl p-4 text-center relative overflow-hidden">
+                    <div class="absolute top-2 right-2 text-[10px] text-amber-400/70 font-mono">TARGET ITEM</div>
+                    <div id="targetIconContainer" class="w-16 h-16 mx-auto my-2 rounded-full bg-amber-500/10 border-2 border-amber-400/40 flex items-center justify-center text-3xl text-amber-300 pokeball-bounce">
+                        <i id="targetIcon" class="fa-solid fa-seedling"></i>
+                    </div>
+                    <h4 id="targetName" class="text-sm font-bold text-amber-200">순백의 이솔 은방울꽃 & 청렴볼</h4>
+                    <p id="targetCategory" class="text-[11px] text-slate-400 mt-0.5">관련 법령: 청탁금지법</p>
+                </div>
+
+                <!-- 퀴즈 제시문 -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                        <i class="fa-solid fa-circle-question"></i> 청렴 포획 미션 퀴즈
+                    </div>
+                    <p id="quizQuestion" class="text-xs sm:text-sm text-slate-200 leading-relaxed bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50">
+                        질문 내용이 이곳에 표시됩니다.
+                    </p>
+                </div>
+
+                <!-- 보기 버튼 목록 -->
+                <div id="quizOptions" class="space-y-2 pt-1">
+                    <!-- 동적 보기 생성 -->
+                </div>
+
+                <!-- 해설 영역 (정답/오답 클릭 후 표시) -->
+                <div id="explanationBox" class="hidden p-3.5 rounded-xl text-xs space-y-1 transition-all">
+                    <!-- 해설 텍스트 -->
+                </div>
+            </div>
+
+            <!-- 모달 하단 버튼 -->
+            <div class="p-4 bg-slate-800/80 border-t border-slate-700 flex justify-end">
+                <button id="nextModalBtn" onclick="processQuizResult()" disabled class="w-full py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-not-allowed">
+                    <i class="fa-solid fa-lock"></i> 정답을 선택해주세요
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 연수 이수증 모달 -->
+    <div id="certificateModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-slate-900 border border-amber-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+            
+            <div class="p-4 bg-amber-950/40 border-b border-amber-500/30 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-award text-amber-400 text-lg"></i>
+                    <h3 class="text-sm font-bold text-amber-200">2026 청렴 연수 이수증</h3>
+                </div>
+                <button onclick="closeCertificateModal()" class="text-slate-400 hover:text-white text-lg px-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto custom-scrollbar space-y-4">
+                
+                <!-- 실물 이수증 미리보기 박스 -->
+                <div id="certificatePrintArea" class="bg-slate-950 border-4 border-amber-500/60 p-6 rounded-xl text-center space-y-4 relative bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+                    <div class="text-[10px] text-amber-400 tracking-widest uppercase font-bold">Gyeonggi Provincial Office of Education</div>
+                    
+                    <h2 class="text-xl font-black text-amber-300 tracking-tight">청 렴 연 수 이 수 증</h2>
+                    
+                    <div class="w-12 h-0.5 bg-amber-400 mx-auto"></div>
+
+                    <div class="text-xs text-slate-300 space-y-2 py-2">
+                        <p><span class="text-slate-400">소속 및 직위:</span> <strong id="certDisplayRole" class="text-amber-200">담임교사</strong></p>
+                        <p><span class="text-slate-400">성 명:</span> <strong id="certDisplayName" class="text-white text-sm">홍길동</strong></p>
+                        <p><span class="text-slate-400">연수 과정:</span> <strong>2026 교직원 맞춤형 청렴 코스웨어 (30분)</strong></p>
+                    </div>
+
+                    <div class="bg-slate-900/90 border border-amber-500/30 p-3 rounded-lg text-left space-y-1">
+                        <div class="text-[11px] text-amber-400 font-bold"><i class="fa-solid fa-quote-left"></i> 나의 2026 청렴 한 줄 다짐:</div>
+                        <p id="certDisplayPledge" class="text-xs text-slate-200 italic font-medium leading-relaxed">
+                            "투명하고 공정한 학급 운영과 솔선수범으로 공직 사회의 청렴 문화를 선도하겠습니다!"
+                        </p>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 pt-2">
+                        위 사람은 경기도교육청 반부패 법령 및 청렴 정책(청탁금지법, 이해충돌방지법, 행동강령, 공익신고, 갑질예방) 미션을 모두 완성하였으므로 이수증을 수여합니다.
+                    </div>
+
+                    <div class="pt-2 flex justify-between items-end text-[10px] text-slate-500">
+                        <span>발급일: 2026. 09. 28.</span>
+                        <span class="font-bold text-slate-400">이솔초등학교장 / 교감</span>
+                    </div>
+                </div>
+
+                <!-- 개인 정보 및 다짐 작성 폼 -->
+                <div class="space-y-3 bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+                    <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square text-amber-400"></i> 이수증 기재 정보 입력
+                    </h4>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">직위 / 역할</label>
+                            <select id="userRoleInput" onchange="updateCertPreview()" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
+                                <option value="담임교사">담임교사</option>
+                                <option value="부장교사">부장교사</option>
+                                <option value="교무/전담교사">교무/전담교사</option>
+                                <option value="영양/보건/상담교사">영양/보건/상담교사</option>
+                                <option value="교육공무직원">교육공무직원</option>
+                                <option value="교감">교감</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">성명</label>
+                            <input type="text" id="userNameInput" value="홍길동" oninput="updateCertPreview()" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">2026 청렴 한 줄 다짐</label>
+                        <input type="text" id="userPledgeInput" value="투명하고 공정한 학급 운영과 솔선수범으로 공직 사회의 청렴 문화를 선도하겠습니다!" oninput="updateCertPreview()" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400" placeholder="다짐을 입력하세요">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 모달 푸터 버튼 -->
+            <div class="p-4 bg-slate-800 border-t border-slate-700 flex gap-2">
+                <button onclick="copyCertificateText()" class="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> 내용 복사하기
+                </button>
+                <button onclick="finishCertificate()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-check"></i> 이수 완료 제출
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 교감선생님 전용 관리자 & QR출력 모달 -->
+    <div id="adminModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            
+            <div class="p-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-amber-400 text-lg"></i>
+                    <h3 class="text-sm font-bold text-white">현장 부착용 6대 학년부장 스탑 QR 생성기</h3>
+                </div>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white text-lg px-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto custom-scrollbar space-y-4">
+                
+                <!-- URL 설정 박스 -->
+                <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 space-y-2">
+                    <label class="text-xs font-bold text-amber-300 block flex items-center gap-1.5">
+                        <i class="fa-solid fa-link"></i> 현재 배포된 웹사이트 주소 (Base URL)
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="baseUrlInput" oninput="generateQrCards()" placeholder="https://내아이디.netlify.app" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-emerald-300 focus:outline-none focus:border-amber-400 font-mono">
+                        <button onclick="resetBaseUrl()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded-lg transition">
+                            자동감지
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-400">
+                        💡 선생님들께서 배포하신 웹 주소를 입력하시면, 스캔 즉시 해당 학년부장 퀴즈가 열리는 QR 코드가 생성됩니다.
+                    </p>
+                </div>
+
+                <!-- QR 코드 미리보기 리스트 -->
+                <div id="adminQrList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- 동적 카드 프리뷰 -->
+                </div>
+
+                <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+                    <button onclick="openResetModal()" class="py-2 px-3 bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-700/50 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> 데이터 초기화
+                    </button>
+                    <button onclick="printQrPosters()" class="py-2.5 px-4 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg">
+                        <i class="fa-solid fa-print"></i> 6개 QR 안내판 A4 인쇄하기
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-800 border-t border-slate-700 text-center">
+                <button onclick="closeAdminModal()" class="px-6 py-1.5 bg-slate-700 text-slate-200 text-xs font-bold rounded-lg hover:bg-slate-600 transition">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 데이터 초기화 커스텀 모달 -->
+    <div id="resetModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-xs bg-slate-900 border border-rose-500/50 rounded-2xl p-5 text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 mx-auto rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl border border-rose-500/40">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-white">기록 초기화 및 다시 시작</h4>
+                <p class="text-xs text-slate-300 mt-1">수집된 청렴 아이템과 연수 기록을 완전히 초기화하고 처음부터 다시 도전하시겠습니까?</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeResetModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+                    취소
+                </button>
+                <button onclick="confirmResetData()" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition">
+                    초기화 후 재도전
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toastMessage" class="fixed bottom-6 z-50 bg-slate-800 border border-amber-400 text-amber-200 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold transition-all transform translate-y-20 opacity-0 flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-amber-400"></i> <span id="toastText">알림 내용</span>
+    </div>
+
+    <script>
+        /* -------------------------------------------------------------------------
+         * 1. 6대 학년부장 스탑 데이터 (STOPS_DATA)
+         * ------------------------------------------------------------------------- */
+        const STOPS_DATA = [
+            {
+                id: "STOP1",
+                name: "1학년 부장님 스탑",
+                location: "1학년 부장실 앞",
+                category: "청탁금지법",
+                itemName: "순백의 이솔 은방울꽃 & 청렴볼",
+                itemIcon: "fa-seedling",
+                iconBg: "from-emerald-500 to-teal-600",
+                badgeColor: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
+                question: "Q1. 신입생 학부모님이 입학 감사 인사로 3,000원 상당의 모바일 기프티콘을 카톡으로 보내오셨습니다. 1학년 담임교사의 올바른 대응은?",
+                options: [
+                    "3만원 이하의 소액 기프티콘이므로 감사히 받고 음료로 교환한다.",
+                    "담임교사와 학부모는 상시 지도·평가 관계이므로 금액에 상관없이 수수가 금지되어 정중히 거절 의사를 표시한다.",
+                    "일단 수락하고 차후 동일 금액의 모바일 쿠폰으로 답례한다.",
+                    "동료 선생님들과 나눠 마시기 위해 수락한다."
+                ],
+                correctIndex: 1,
+                explanation: "💡 담임교사와 학부모는 평소 성적, 생활기록부, 생활지도 등 직접적인 지도·평가 관계에 있으므로 금액에 관계없이 1원 상당의 선물이나 모바일 기프티콘도 수수할 수 없습니다. (청탁금지법 제8조)"
+            },
+            {
+                id: "STOP2",
+                name: "2학년 부장님 스탑",
+                location: "2학년 부장실 앞",
+                category: "이해충돌방지법 & 공무원 행동강령",
+                itemName: "늘 푸른 이솔 소나무 방패",
+                itemIcon: "fa-shield-halved",
+                iconBg: "from-blue-500 to-cyan-600",
+                badgeColor: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+                question: "Q2. 다음 중 학교 현장에서 이해충돌방지법 또는 공무원 행동강령에 위배되는 행동은 무엇일까요?",
+                options: [
+                    "친인척이 운영하는 업체와 계약 시 사전 사적이해관계자 신고 및 회피 신청을 하였다.",
+                    "주말 개인 가족 모임을 위해 학교 소유의 프린터기와 용지 200장을 사적으로 가져가 사용하였다.",
+                    "학교 계약 담당자가 직무관련자와의 사적 접촉을 회피하였다.",
+                    "평가 위원 선정 시 사적 관계가 있는 신청자가 포함되어 교사 스스로 회피를 신청하였다."
+                ],
+                correctIndex: 1,
+                explanation: "💡 공용물품의 사적 사용·유용 금지! 학교 소유 물품, 자재, 프린터, 장비 등을 개인적인 용도로 사용하는 것은 공무원 행동강령 제13조 및 이해충돌방지법 위반에 해당합니다."
+            },
+            {
+                id: "STOP3",
+                name: "3학년 부장님 스탑",
+                location: "3학년 부장실 앞",
+                category: "공무원 행동강령 (외부강의등)",
+                itemName: "빛나는 이솔초 청렴 교표",
+                itemIcon: "fa-certificate",
+                iconBg: "from-amber-500 to-yellow-600",
+                badgeColor: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+                question: "Q3. 교사가 타 교육청 연수원이나 대학에서 대가를 받고 외부강의를 진행할 때 적용되는 원칙으로 올바른 것은?",
+                options: [
+                    "사례금을 받는 외부강의는 강의를 마친 날부터 10일 이내 또는 사전에 신고해야 한다.",
+                    "퇴근 후 주말에 실시한 외부강의는 사례금을 받더라도 신고하지 않아도 된다.",
+                    "교육청이 주관하는 외부강의는 사례금 금액과 상관없이 신고가 면제된다.",
+                    "사전에 구두로 교장선생님께 말씀드리면 행정시스템 신고는 생략 가능하다."
+                ],
+                correctIndex: 0,
+                explanation: "💡 대가를 받는 외부강의등을 할 때에는 사전 또는 강의를 마친 날부터 10일 이내에 전자서면(NEIS 등)으로 신고해야 합니다. (공무원 행동강령 제15조)"
+            },
+            {
+                id: "STOP4",
+                name: "4학년 부장님 스탑",
+                location: "4학년 부장실 앞",
+                category: "갑질 및 직장 내 괴롭힘 예방",
+                itemName: "상호존중 왕관",
+                itemIcon: "fa-crown",
+                iconBg: "from-purple-500 to-indigo-600",
+                badgeColor: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+                question: "Q4. 동학년 협의회 및 동료 교사, 선후배 간의 관계에서 '직장 내 괴롭힘(갑질)'에 해당하는 부적절한 행위는?",
+                options: [
+                    "교육과정 수립을 위해 정당한 절차에 따라 교무분장 및 업무 협조를 구하는 행위",
+                    "개인적 친분이나 직위·선배 위치를 이용해 퇴근 후 사적인 심부름이나 사적 연락을 지속적으로 강요하는 행위",
+                    "관련 지침에 의거하여 업무 기한 준수를 정중히 독촉하는 행위",
+                    "상호 존댓말을 사용하며 학년 업무 관련 이견을 조율하는 소통 행위"
+                ],
+                correctIndex: 1,
+                explanation: "💡 업무상 적정범위를 넘어 사적 심부름을 시키거나, 퇴근 후 개인적인 지시·연락을 지속하는 것은 대표적인 직장 내 괴롭힘(갑질) 행위입니다."
+            },
+            {
+                id: "STOP5",
+                name: "5학년 부장님 스탑",
+                location: "5학년 부장실 앞",
+                category: "공익신고자 보호제도",
+                itemName: "공익신고 용기 날개",
+                itemIcon: "fa-feather-pointed",
+                iconBg: "from-rose-500 to-pink-600",
+                badgeColor: "bg-rose-500/20 text-rose-300 border border-rose-500/30",
+                question: "Q5. 경기도교육청 공익제보 보호 및 지원 제도에 대한 설명으로 가장 올바른 것은?",
+                options: [
+                    "신고자의 신분이 노출되더라도 교육청 차원의 보호 조치는 제공되지 않는다.",
+                    "신고로 인한 불이익 조치를 받을 경우, 비실명 대리신고 제도(변호사 대리)를 통해 신분을 보장받을 수 있다.",
+                    "학교 내 비위 행위 제보는 오직 실명으로만 접수해야 인정된다.",
+                    "공익신고자는 불이익 조치를 당하더라도 원상회복을 요구할 수 없다."
+                ],
+                correctIndex: 1,
+                explanation: "💡 경기도교육청은 비실명 대리신고제도(전담 변호사를 통한 대리 신고) 및 공익제보자 비밀보장, 불이익 조치 금지, 원상회복 요구권 등을 통해 신고자의 신분을 강력히 보호합니다."
+            },
+            {
+                id: "STOP6",
+                name: "6학년 부장님 스탑",
+                location: "6학년 부장실 앞",
+                category: "청렴한 학급·예산 운영",
+                itemName: "2026 이솔 청렴 마스터 칭호",
+                itemIcon: "fa-award",
+                iconBg: "from-amber-400 to-orange-600",
+                badgeColor: "bg-amber-400/20 text-amber-300 border border-amber-400/30",
+                question: "Q6. 학급운영비, 동아리 예산 집행 및 청렴한 학교 문화를 조성하기 위해 가장 올바른 자세는?",
+                options: [
+                    "남은 학급운영비는 영수증 없이 교사의 개인 용품 구매에 사용한다.",
+                    "모든 예산 집행은 사용 목적에 맞춰 영수증과 증빙 서류를 갖추어 투명하게 집행한다.",
+                    "학년 예산이 남았을 경우 사적인 동학년 회식비로 우선 지출한다.",
+                    "단골 업체라는 이유로 견적 비교 없이 특정 업체와 정기적 무통장 직거래를 진행한다."
+                ],
+                correctIndex: 1,
+                explanation: "💡 학급운영비 및 모든 학교 예산은 관련 지침과 목적에 맞추어 정확한 수기/전자 증빙 서류를 갖추고 투명하게 지출해야 합니다."
+            }
+        ];
+
+        /* -------------------------------------------------------------------------
+         * 2. 수집 가능 전설 이솔청렴몬 데이터
+         * ------------------------------------------------------------------------- */
+        const INTEGRITY_MONS = [
+            {
+                id: "MON_DRAGON",
+                name: "전설의 이솔청렴룡",
+                title: "청렴의 빛으로 모든 비위를 물리치는 수호룡",
+                icon: "fa-dragon",
+                gradient: "from-amber-400 to-rose-500",
+                desc: "특성: 공정함 +100 · 청렴도 MAX · 부패 방어력 무한",
+                bgHex: "#f59e0b"
+            },
+            {
+                id: "MON_TIGER",
+                name: "위풍당당 소나무호랑이",
+                title: "솔선수범과 절개로 학교를 지키는 늠름한 수호자",
+                icon: "fa-shield-cat",
+                gradient: "from-emerald-400 to-teal-600",
+                desc: "특성: 소신 집행 +99 · 청렴 솔선수범 · 신뢰도 MAX",
+                bgHex: "#10b981"
+            },
+            {
+                id: "MON_FAIRY",
+                name: "순백의 은방울요정",
+                title: "투명하고 깨끗한 청렴 마음을 전하는 이솔 요정",
+                icon: "fa-wand-magic-sparkles",
+                gradient: "from-pink-400 to-purple-600",
+                desc: "특성: 순백의 마음 +100 · 청탁 거절율 100% · 정직도 MAX",
+                bgHex: "#ec4899"
+            },
+            {
+                id: "MON_OWL",
+                name: "지혜의 청렴올빼미",
+                title: "공정한 법령 숙지로 청렴 문화를 밝히는 현자",
+                icon: "fa-crow",
+                gradient: "from-blue-400 to-indigo-600",
+                desc: "특성: 법령 지식 +100 · 이해충돌 회피 능통 · 통찰력 MAX",
+                bgHex: "#3b82f6"
+            }
+        ];
+
+        /* -------------------------------------------------------------------------
+         * 3. 애플리케이션 상태 (State)
+         * ------------------------------------------------------------------------- */
+        let state = {
+            collectedStops: [],
+            currentActiveStop: null,
+            selectedOptionIndex: null,
+            soundEnabled: true,
+            activeMode: 'map',
+            assignedMonId: null,
+            userRole: "담임교사",
+            userName: "홍길동",
+            userPledge: "투명하고 공정한 학급 운영과 솔선수범으로 공직 사회의 청렴 문화를 선도하겠습니다!"
+        };
+
+        // Web Audio API 효과음 생성기
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!state.soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'catch') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(130, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                }
+            } catch (e) {}
+        }
+
+        /* -------------------------------------------------------------------------
+         * 4. 데이터 저장 및 복원 (LocalStorage)
+         * ------------------------------------------------------------------------- */
+        function loadSavedState() {
+            const saved = localStorage.getItem('integrity_mon_go_2026_v2');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state.collectedStops = parsed.collectedStops || [];
+                    state.userName = parsed.userName || "홍길동";
+                    state.userRole = parsed.userRole || "담임교사";
+                    state.userPledge = parsed.userPledge || state.userPledge;
+                    state.assignedMonId = parsed.assignedMonId || null;
+                } catch(e) {}
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('integrity_mon_go_2026_v2', JSON.stringify({
+                collectedStops: state.collectedStops,
+                userName: state.userName,
+                userRole: state.userRole,
+                userPledge: state.userPledge,
+                assignedMonId: state.assignedMonId
+            }));
+        }
+
+        function getOrAssignIntegrityMon() {
+            if (!state.assignedMonId) {
+                const randomIndex = Math.floor(Math.random() * INTEGRITY_MONS.length);
+                state.assignedMonId = INTEGRITY_MONS[randomIndex].id;
+                saveState();
+            }
+            return INTEGRITY_MONS.find(m => m.id === state.assignedMonId) || INTEGRITY_MONS[0];
+        }
+
+        /* -------------------------------------------------------------------------
+         * 5. UI 초기화 및 이벤트 바인딩
+         * ------------------------------------------------------------------------- */
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedState();
+            renderInventorySlots();
+            renderStopList();
+            updateProgressUI();
+            initBaseUrl();
+            checkUrlStopParam();
+        });
+
+        function checkUrlStopParam() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let stopParam = urlParams.get('stop') || urlParams.get('code');
+            if (!stopParam && window.location.hash) {
+                stopParam = window.location.hash.replace('#', '');
+            }
+
+            if (stopParam) {
+                const targetStop = STOPS_DATA.find(s => s.id === stopParam.toUpperCase());
+                if (targetStop) {
+                    setTimeout(() => {
+                        openQuizModal(targetStop.id);
+                        showToast(`🎯 [${targetStop.name}] QR 접속!`);
+                    }, 400);
+                }
+            }
+        }
+
+        function initBaseUrl() {
+            const input = document.getElementById('baseUrlInput');
+            let currentUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            if (currentUrl.includes('file://')) {
+                currentUrl = "https://esol-integrity.netlify.app/index.html";
+            }
+            input.value = currentUrl;
+            generateQrCards();
+        }
+
+        function resetBaseUrl() {
+            initBaseUrl();
+            showToast("🌐 Base URL이 설정되었습니다.");
+        }
+
+        // 6개 스탑별 QR 카드 동적 생성
+        function generateQrCards() {
+            const baseUrl = document.getElementById('baseUrlInput').value.trim() || window.location.href;
+            const container = document.getElementById('adminQrList');
+            const printGrid = document.getElementById('qrCardsGrid');
+            
+            container.innerHTML = '';
+            printGrid.innerHTML = '';
+
+            STOPS_DATA.forEach(stop => {
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const directUrl = `${baseUrl}${separator}stop=${stop.id}`;
+                const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(directUrl)}`;
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-800 p-3 rounded-xl border border-slate-700 flex items-center justify-between space-x-3 hover:border-amber-400/50 transition";
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <img src="${qrImgUrl}" alt="${stop.id} QR" class="w-14 h-14 rounded-lg bg-white p-1 border border-slate-600 flex-shrink-0">
+                        <div class="overflow-hidden">
+                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded ${stop.badgeColor}">${stop.id}</span>
+                            <h4 class="text-xs font-bold text-amber-300 mt-1 truncate">${stop.name}</h4>
+                            <p class="text-[10px] text-slate-400 truncate">${stop.category}</p>
+                        </div>
+                    </div>
+                    <button onclick="openQuizModal('${stop.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-amber-500 hover:text-slate-950 text-amber-300 rounded-lg text-[11px] font-bold transition flex-shrink-0">
+                        테스트
+                    </button>
+                `;
+                container.appendChild(card);
+
+                const printCard = document.createElement('div');
+                printCard.className = "print-card p-5 rounded-2xl border-2 border-slate-900 text-center flex flex-col items-center justify-between space-y-3 bg-white text-slate-900 shadow-md";
+                printCard.innerHTML = `
+                    <div class="border-b-2 border-slate-900 pb-2 w-full">
+                        <span class="text-xs font-black text-slate-600 tracking-widest block">2026 이솔초 교직원 청렴연수 [${stop.id}]</span>
+                        <h2 class="text-lg font-black text-slate-900 mt-0.5">${stop.name}</h2>
+                    </div>
+                    
+                    <div class="p-2 bg-white rounded-xl border-2 border-slate-800 my-1">
+                        <img src="${qrImgUrl}" alt="${stop.id} QR" class="w-44 h-44">
+                    </div>
+
+                    <div class="space-y-1 w-full">
+                        <div class="text-xs font-bold text-amber-800 bg-amber-100 py-1 px-3 rounded-full inline-block border border-amber-300">
+                            🎯 미션 주제: ${stop.category}
+                        </div>
+                        <p class="text-[11px] text-slate-700 font-medium pt-1 leading-snug">
+                            📱 위 QR을 카메라로 스캔하시면<br><strong class="text-slate-900 text-xs">즉시 [${stop.name}] 퀴즈 미션</strong>이 열립니다!
+                        </p>
+                    </div>
+                `;
+                printGrid.appendChild(printCard);
+            });
+        }
+
+        function printQrPosters() {
+            const printSec = document.getElementById('printableQrSection');
+            printSec.classList.remove('hidden');
+            window.print();
+            setTimeout(() => {
+                printSec.classList.add('hidden');
+            }, 1000);
+        }
+
+        // 상단 인벤토리 슬롯 (6개)
+        function renderInventorySlots() {
+            const container = document.getElementById('inventorySlots');
+            container.innerHTML = '';
+
+            STOPS_DATA.forEach((stop, idx) => {
+                const isCollected = state.collectedStops.includes(stop.id);
+                const slotEl = document.createElement('div');
+                slotEl.className = `aspect-square rounded-xl border flex flex-col items-center justify-center p-1 relative transition-all duration-300 ${
+                    isCollected 
+                        ? 'bg-gradient-to-br ' + stop.iconBg + ' border-amber-300/80 shadow-md scale-105 cursor-pointer' 
+                        : 'bg-slate-900/60 border-slate-700/80 text-slate-600 opacity-60'
+                }`;
+
+                slotEl.onclick = () => {
+                    openQuizModal(stop.id);
+                };
+
+                slotEl.innerHTML = `
+                    <i class="fa-solid ${stop.itemIcon} ${isCollected ? 'text-amber-200 text-lg' : 'text-slate-600 text-base'}"></i>
+                    <span class="text-[9px] text-center font-bold mt-1 line-clamp-1 ${isCollected ? 'text-white' : 'text-slate-500'}">
+                        ${isCollected ? stop.id : `슬롯 ${idx+1}`}
+                    </span>
+                    ${isCollected ? '<i class="fa-solid fa-check-circle absolute -top-1 -right-1 text-emerald-400 text-xs bg-slate-900 rounded-full"></i>' : ''}
+                `;
+                container.appendChild(slotEl);
+            });
+        }
+
+        // 포켓스탑 리스트
+        function renderStopList() {
+            const container = document.getElementById('stopList');
+            container.innerHTML = '';
+
+            STOPS_DATA.forEach((stop) => {
+                const isCollected = state.collectedStops.includes(stop.id);
+                const card = document.createElement('div');
+                card.className = `p-3.5 rounded-2xl border transition-all duration-300 flex justify-between items-center ${
+                    isCollected 
+                        ? 'bg-slate-800/50 border-emerald-500/40 opacity-90' 
+                        : 'bg-slate-800 border-slate-700 hover:border-amber-400/60 hover:shadow-lg'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${stop.iconBg} flex items-center justify-center text-white text-xl shadow-md ${isCollected ? '' : 'pokeball-bounce'}">
+                            <i class="fa-solid ${stop.itemIcon}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded ${stop.badgeColor}">${stop.id}</span>
+                                <h3 class="text-xs font-bold text-white">${stop.name}</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">${stop.location} · <span class="text-amber-300/80">${stop.category}</span></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        ${isCollected 
+                            ? `<div class="flex items-center gap-1.5">
+                                 <span class="text-xs text-emerald-400 font-bold px-2 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center gap-1">
+                                   <i class="fa-solid fa-check"></i> 완료
+                                 </span>
+                                 <button onclick="openQuizModal('${stop.id}')" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold px-2.5 py-1.5 rounded-xl border border-slate-600 transition" title="다시 풀어보기">
+                                   복습
+                                 </button>
+                               </div>`
+                            : `<button onclick="openQuizModal('${stop.id}')" class="text-xs bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl shadow-md transition flex items-center gap-1">
+                                 <i class="fa-solid fa-hand-pointer"></i> 탐험하기
+                               </button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 전체 진행 상황 업데이트
+        function updateProgressUI() {
+            const count = state.collectedStops.length;
+            const total = STOPS_DATA.length;
+            const percent = Math.round((count / total) * 100);
+
+            document.getElementById('progressText').innerText = `${count} / ${total} 획득 (${percent}%)`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+
+            const banner = document.getElementById('completionBanner');
+            if (count === total) {
+                const mon = getOrAssignIntegrityMon();
+
+                document.getElementById('monIcon').className = `fa-solid ${mon.icon}`;
+                document.getElementById('monName').innerText = mon.name;
+                document.getElementById('monTitle').innerText = `"${mon.title}"`;
+                document.getElementById('monDesc').innerText = mon.desc;
+                document.getElementById('monAvatarBg').className = `w-20 h-20 mx-auto rounded-full bg-gradient-to-br ${mon.gradient} p-1 shadow-lg pokeball-bounce flex items-center justify-center`;
+
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        /* -------------------------------------------------------------------------
+         * 6. 퀴즈 모달 및 답변 판단 로직
+         * ------------------------------------------------------------------------- */
+        function openQuizModal(stopId) {
+            playSound('click');
+            const stop = STOPS_DATA.find(s => s.id === stopId);
+            if (!stop) return;
+
+            state.currentActiveStop = stop;
+            state.selectedOptionIndex = null;
+
+            document.getElementById('modalStopBadge').innerText = stop.id;
+            document.getElementById('modalStopName').innerText = stop.name;
+            document.getElementById('targetIcon').className = `fa-solid ${stop.itemIcon}`;
+            document.getElementById('targetName').innerText = stop.itemName;
+            document.getElementById('targetCategory').innerText = `관련 법령: ${stop.category}`;
+            document.getElementById('quizQuestion').innerText = stop.question;
+
+            const optionsBox = document.getElementById('quizOptions');
+            optionsBox.innerHTML = '';
+
+            stop.options.forEach((optText, idx) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = `w-full text-left p-3 rounded-xl border text-xs leading-relaxed transition flex items-start gap-2 bg-slate-800 border-slate-700 text-slate-200 hover:border-amber-400/80`;
+                optBtn.onclick = () => selectOption(idx, optBtn);
+
+                optBtn.innerHTML = `
+                    <span class="w-5 h-5 rounded-full bg-slate-700 text-amber-300 font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">${idx+1}</span>
+                    <span>${optText}</span>
+                `;
+                optionsBox.appendChild(optBtn);
+            });
+
+            const expBox = document.getElementById('explanationBox');
+            expBox.className = 'hidden';
+            expBox.innerHTML = '';
+
+            const nextBtn = document.getElementById('nextModalBtn');
+            nextBtn.disabled = true;
+            nextBtn.className = "w-full py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-not-allowed";
+            nextBtn.innerHTML = `<i class="fa-solid fa-lock"></i> 정답을 선택해주세요`;
+
+            document.getElementById('quizModal').classList.remove('hidden');
+        }
+
+        function selectOption(index, btnElement) {
+            playSound('click');
+            state.selectedOptionIndex = index;
+            const stop = state.currentActiveStop;
+
+            const allBtns = document.getElementById('quizOptions').children;
+            for (let btn of allBtns) {
+                btn.className = "w-full text-left p-3 rounded-xl border text-xs leading-relaxed transition flex items-start gap-2 bg-slate-800 border-slate-700 text-slate-200";
+            }
+
+            const isCorrect = (index === stop.correctIndex);
+            const expBox = document.getElementById('explanationBox');
+
+            if (isCorrect) {
+                btnElement.className = "w-full text-left p-3 rounded-xl border-2 text-xs leading-relaxed transition flex items-start gap-2 bg-emerald-950/80 border-emerald-400 text-emerald-200 font-medium";
+                expBox.className = "p-3.5 rounded-xl text-xs bg-emerald-950/90 border border-emerald-500/40 text-emerald-200 space-y-1 block";
+                expBox.innerHTML = `<strong>🎉 정답입니다!</strong><br>${stop.explanation}`;
+                playSound('catch');
+
+                const nextBtn = document.getElementById('nextModalBtn');
+                nextBtn.disabled = false;
+                nextBtn.className = "w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2";
+                nextBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> 아이템 포획하기!`;
+            } else {
+                btnElement.className = "w-full text-left p-3 rounded-xl border-2 text-xs leading-relaxed transition flex items-start gap-2 bg-rose-950/80 border-rose-500 text-rose-200 shake-animation";
+                expBox.className = "p-3.5 rounded-xl text-xs bg-rose-950/90 border border-rose-500/40 text-rose-200 space-y-1 block";
+                expBox.innerHTML = `<strong>❌ 다시 생각해보세요!</strong><br>올바른 법령 수칙을 지키기 위한 답변을 골라주세요.`;
+                playSound('wrong');
+
+                const nextBtn = document.getElementById('nextModalBtn');
+                nextBtn.disabled = true;
+                nextBtn.className = "w-full py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-not-allowed";
+                nextBtn.innerHTML = `<i class="fa-solid fa-lock"></i> 정답을 선택해주세요`;
+            }
+        }
+
+        function processQuizResult() {
+            const stop = state.currentActiveStop;
+            if (!stop) return;
+
+            const isNewItem = !state.collectedStops.includes(stop.id);
+
+            if (isNewItem) {
+                state.collectedStops.push(stop.id);
+                saveState();
+            }
+
+            closeQuizModal();
+            renderInventorySlots();
+            renderStopList();
+            updateProgressUI();
+
+            showToast(isNewItem ? `🎁 [${stop.itemName}] 포획 완료!` : `✅ [${stop.name}] 복습을 완료하셨습니다.`);
+
+            if (isNewItem) {
+                confetti({
+                    particleCount: 50,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 }
+                });
+                confetti({
+                    particleCount: 50,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 }
+                });
+            }
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').classList.add('hidden');
+        }
+
+        /* -------------------------------------------------------------------------
+         * 7. 이솔청렴몬 포토카드 (PNG) 다운로드
+         * ------------------------------------------------------------------------- */
+        function downloadMonCard() {
+            playSound('click');
+            const mon = getOrAssignIntegrityMon();
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 800;
+            const ctx = canvas.getContext('2d');
+
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, 800);
+            bgGradient.addColorStop(0, '#0f172a');
+            bgGradient.addColorStop(1, '#1e293b');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 600, 800);
+
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 12;
+            ctx.strokeRect(20, 20, 560, 760);
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(32, 32, 536, 736);
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 22px Pretendard, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('2026 이솔초등학교 교직원 맞춤형 청렴연수', 300, 80);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 30px Pretendard, sans-serif';
+            ctx.fillText('이솔 청렴 수호 교직원 카드', 300, 130);
+
+            ctx.beginPath();
+            ctx.arc(300, 310, 110, 0, Math.PI * 2);
+            ctx.fillStyle = mon.bgHex || '#f59e0b';
+            ctx.fill();
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 70px Pretendard, sans-serif';
+            ctx.fillText('⭐', 300, 335);
+
+            ctx.fillStyle = '#fef08a';
+            ctx.font = '900 36px Pretendard, sans-serif';
+            ctx.fillText(mon.name, 300, 480);
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 18px Pretendard, sans-serif';
+            ctx.fillText(`"${mon.title}"`, 300, 520);
+
+            ctx.fillStyle = '#34d399';
+            ctx.font = '16px Pretendard, sans-serif';
+            ctx.fillText(mon.desc, 300, 560);
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+            ctx.fillRect(60, 600, 480, 120);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(60, 600, 480, 120);
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 20px Pretendard, sans-serif';
+            ctx.fillText(`획득 교직원: ${state.userName} (${state.userRole})`, 300, 645);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '15px Pretendard, sans-serif';
+            ctx.fillText(`발급일: 2026. 09. 28. · 이솔초등학교장 / 교감`, 300, 685);
+
+            const imageURI = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `이솔청렴몬_카드_${mon.name}.png`;
+            link.href = imageURI;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast(`🎨 [${mon.name}] 카드가 이미지로 저장되었습니다!`);
+        }
+
+        /* -------------------------------------------------------------------------
+         * 8. 기타 모드 / 이수증 / 관리자 유틸리티
+         * ------------------------------------------------------------------------- */
+        let html5QrCodeScanner = null;
+
+        async function startCameraScanner() {
+            playSound('click');
+            const statusMsg = document.getElementById('cameraStatusMsg');
+            const startBtn = document.getElementById('startCamBtn');
+            const stopBtn = document.getElementById('stopCamBtn');
+
+            try {
+                if (!html5QrCodeScanner) {
+                    html5QrCodeScanner = new Html5Qrcode("qrScannerContainer");
+                }
+
+                if (statusMsg) statusMsg.style.display = 'none';
+
+                await html5QrCodeScanner.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 180, height: 180 }
+                    },
+                    (decodedText) => {
+                        handleScannedQrCode(decodedText);
+                    },
+                    () => {}
+                );
+
+                if (startBtn) startBtn.classList.add('hidden');
+                if (stopBtn) stopBtn.classList.remove('hidden');
+                showToast("📷 카메라인식이 시작되었습니다.");
+            } catch (err) {
+                console.error("Camera access error:", err);
+                if (statusMsg) {
+                    statusMsg.style.display = 'flex';
+                    statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-2xl text-rose-400"></i><span class="text-rose-300">카메라 권한을 허용해주시거나<br>보안 연결(HTTPS) 환경인지 확인해 주세요.</span>`;
+                }
+                showToast("❌ 카메라를 열 수 없습니다.");
+            }
+        }
+
+        async function stopCameraScanner() {
+            if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
+                try {
+                    await html5QrCodeScanner.stop();
+                } catch(e) {}
+            }
+            const statusMsg = document.getElementById('cameraStatusMsg');
+            const startBtn = document.getElementById('startCamBtn');
+            const stopBtn = document.getElementById('stopCamBtn');
+
+            if (statusMsg) statusMsg.style.display = 'flex';
+            if (startBtn) startBtn.classList.remove('hidden');
+            if (stopBtn) stopBtn.classList.add('hidden');
+        }
+
+        function handleScannedQrCode(scannedText) {
+            playSound('catch');
+            
+            let stopCode = null;
+            try {
+                const url = new URL(scannedText);
+                stopCode = url.searchParams.get('stop') || url.searchParams.get('code') || url.hash.replace('#', '');
+            } catch(e) {
+                stopCode = scannedText;
+            }
+
+            if (!stopCode) {
+                stopCode = scannedText;
+            }
+
+            stopCode = stopCode.trim().toUpperCase();
+            const targetStop = STOPS_DATA.find(s => s.id === stopCode);
+
+            if (targetStop) {
+                stopCameraScanner();
+                openQuizModal(targetStop.id);
+                showToast(`🎯 [${targetStop.name}] QR 스캔 성공!`);
+            } else {
+                showToast("⚠️ 청렴몬 GO QR 코드가 아닙니다.");
+            }
+        }
+
+        function switchMode(mode) {
+            playSound('click');
+            state.activeMode = mode;
+            const mapBtn = document.getElementById('tabMapBtn');
+            const qrBtn = document.getElementById('tabQrBtn');
+            const mapView = document.getElementById('mapModeView');
+            const qrView = document.getElementById('qrModeView');
+
+            if (mode === 'map') {
+                mapBtn.className = "flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold transition flex justify-center items-center gap-1.5";
+                qrBtn.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition flex justify-center items-center gap-1.5";
+                mapView.classList.remove('hidden');
+                qrView.classList.add('hidden');
+                stopCameraScanner();
+            } else {
+                qrBtn.className = "flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold transition flex justify-center items-center gap-1.5";
+                mapBtn.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition flex justify-center items-center gap-1.5";
+                qrView.classList.remove('hidden');
+                mapView.classList.add('hidden');
+                startCameraScanner();
+            }
+        }
+
+        function submitManualCode() {
+            const input = document.getElementById('manualCodeInput');
+            const code = input.value.trim().toUpperCase();
+
+            const targetStop = STOPS_DATA.find(s => s.id === code);
+            if (targetStop) {
+                input.value = '';
+                openQuizModal(targetStop.id);
+            } else {
+                showToast("❌ 올바르지 않은 스탑 코드입니다 (예: STOP1)");
+                playSound('wrong');
+            }
+        }
+
+        function openCertificateModal() {
+            playSound('click');
+            updateCertPreview();
+            document.getElementById('certificateModal').classList.remove('hidden');
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificateModal').classList.add('hidden');
+        }
+
+        function updateCertPreview() {
+            const role = document.getElementById('userRoleInput').value;
+            const name = document.getElementById('userNameInput').value || "홍길동";
+            const pledge = document.getElementById('userPledgeInput').value || "청렴한 학교 문화를 만들어가겠습니다.";
+
+            state.userRole = role;
+            state.userName = name;
+            state.userPledge = pledge;
+            saveState();
+
+            document.getElementById('certDisplayRole').innerText = role;
+            document.getElementById('certDisplayName').innerText = name;
+            document.getElementById('certDisplayPledge').innerText = `"${pledge}"`;
+        }
+
+        function copyCertificateText() {
+            const certText = `[2026 초등학교 교직원 맞춤형 청렴연수 이수확인]\n성명: ${state.userName} (${state.userRole})\n이수과정: 청렴몬 GO 6대 학년부장 코스웨어 (30분)\n청렴 다짐: ${state.userPledge}\n이수완료일: 2026. 09. 28.`;
+            
+            const tempInput = document.createElement("textarea");
+            tempInput.value = certText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast("📋 이수 결과 텍스트가 클립보드에 복사되었습니다!");
+            playSound('click');
+        }
+
+        function finishCertificate() {
+            closeCertificateModal();
+            showToast("🎉 청렴 연수 이수 제출이 정상 완료되었습니다!");
+            playSound('catch');
+        }
+
+        function openAdminModal() {
+            playSound('click');
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (state.soundEnabled) {
+                icon.className = "fa-solid fa-volume-high text-amber-300";
+                showToast("🔊 효과음 켜짐");
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-slate-500";
+                showToast("🔇 효과음 꺼짐");
+            }
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function confirmResetData() {
+            state.collectedStops = [];
+            state.assignedMonId = null;
+            saveState();
+            renderInventorySlots();
+            renderStopList();
+            updateProgressUI();
+            closeResetModal();
+            closeAdminModal();
+            showToast("🔄 기록이 초기화되었습니다. 다시 시작하세요!");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastMessage');
+            document.getElementById('toastText').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
